@@ -190,3 +190,14 @@ enum AdminLogAction {
   Delete
   Email
 }
+
+
+//questions
+model InterviewQuestion {
+  id         String   @id @default(uuid()) 
+  title      String
+  type       String
+  category   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
