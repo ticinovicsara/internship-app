@@ -25,17 +25,19 @@ import { CreateInternDto } from './dto/createIntern.dto';
 
 @Injectable()
 export class InternService {
-  constructor(private readonly prisma: PrismaService) {}
+  [x: string]: any;
+  private postmarkClient: postmark.ServerClient | null = null;
 
-  private s3 = new S3Client({
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    },
-    region: 'eu-central-1',
-  });
+  constructor(private readonly prisma: PrismaService) {
+    const apiToken = process.env.POSTMARK_API_TOKEN;
 
-  private postmark = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
+    if (apiToken) {
+      this.postmarkClient = new postmark.ServerClient(apiToken);
+    } else {
+      console.log('Slanje e-mailova je onemogućeno jer nema API tokena.');
+      this.postmarkClient = null;
+    }
+  }
 
   async get(id: string) {
     return await this.prisma.intern.findUnique({
@@ -232,19 +234,23 @@ export class InternService {
 
     let fullGeneralText = generalTextBody;
 
-    if(internToCreate.disciplines.includes(Discipline.Marketing))
-      fullGeneralText+=`\n\n${marketingFormAdditionalText}`
+    if (internToCreate.disciplines.includes(Discipline.Marketing))
+      fullGeneralText += `\n\n${marketingFormAdditionalText}`;
 
-    if(internToCreate.disciplines.includes(Discipline.Development))
-      fullGeneralText+=`\n\n${devFormAdditionalText}`
+    if (internToCreate.disciplines.includes(Discipline.Development))
+      fullGeneralText += `\n\n${devFormAdditionalText}`;
 
-    this.postmark.sendEmail({
-      From: 'info@dump.hr',
-      To: internToCreate.email,
-      Subject: 'Prijava na DUMP Internship',
-      TextBody: `${fullGeneralText}\n\n${generalTextEnding}`,
-      MessageStream: 'outbound',
-    });
+    if (this.postmarkClient) {
+      this.postmarkClient.sendEmail({
+        From: 'info@dump.hr',
+        To: internToCreate.email,
+        Subject: 'Prijava na DUMP Internship',
+        TextBody: `${fullGeneralText}\n\n${generalTextEnding}`,
+        MessageStream: 'outbound',
+      });
+    } else {
+      console.log('Email nije poslan jer je slanje onemogućeno.');
+    }
 
     return newIntern;
   }

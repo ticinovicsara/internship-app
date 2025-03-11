@@ -5,11 +5,25 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class EmailService {
-  constructor(private readonly prisma: PrismaService) {}
+  private postmarkClient: postmark.ServerClient | null = null;
 
-  private postmark = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
+  constructor(private readonly prisma: PrismaService) {
+    const apiToken = process.env.POSTMARK_API_TOKEN;
+
+    if (apiToken) {
+      this.postmarkClient = new postmark.ServerClient(apiToken);
+    } else {
+      console.log('Slanje e-mailova je onemoguceno jer nema API tokena.');
+      this.postmarkClient = null;
+    }
+  }
 
   async sendEmail(emails: string[], text: string, subject: string) {
+    if (!this.postmarkClient) {
+      console.log('Email nije poslan jer je slanje onemoguceno.');
+      return;
+    }
+
     const interns = await this.prisma.intern.findMany({
       where: { email: { in: emails } },
       select: {
@@ -39,9 +53,9 @@ export class EmailService {
 
     return Promise.all(
       interns.map((intern) => {
-        return this.postmark.sendEmail({
+        return this.postmarkClient.sendEmail({
           From: 'info@dump.hr',
-          To: intern.email,
+          To: String(intern.email),
           Subject: subject,
           TextBody: template.render({ intern }),
           MessageStream: 'outbound',

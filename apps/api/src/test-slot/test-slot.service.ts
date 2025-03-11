@@ -14,9 +14,18 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TestSlotService {
-  constructor(private readonly prisma: PrismaService) {}
+  private postmarkClient: postmark.ServerClient | null = null;
 
-  private postmark = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
+  constructor(private readonly prisma: PrismaService) {
+    const apiToken = process.env.POSTMARK_API_TOKEN;
+
+    if (apiToken) {
+      this.postmarkClient = new postmark.ServerClient(apiToken);
+    } else {
+      console.log('Slanje e-mailova je onemogućeno jer nema API tokena.');
+      this.postmarkClient = null;
+    }
+  }
 
   async getAll() {
     const testSlots = await this.prisma.testSlot.findMany({
@@ -192,11 +201,13 @@ export class TestSlotService {
     }
 
     const intern = internDiscipline.intern;
-    await this.postmark.sendEmail({
-      From: 'info@dump.hr',
-      To: intern.email,
-      Subject: 'Uspješno biranje termina za DUMP Internship inicijalni ispit',
-      TextBody: `Pozdrav ${intern.firstName},
+    if (this.postmarkClient) {
+      this.postmarkClient.sendEmail({
+        From: 'info@dump.hr',
+        To: intern.email,
+        Subject: 'Uspješno biranje termina za DUMP Internship inicijalni ispit',
+        TextBody: `Pozdrav ${intern.firstName},
+    
 biranje termina inicijalnog dev testa je uspješno provedeno! Termin svog ispita možeš vidjeti na status stranici: https://internship.dump.hr/status/${intern.id}
 U slučaju da ne možeš doći na odabrani termin, javi nam se na vrijeme na info@dump.hr
 
@@ -209,8 +220,11 @@ Tvoj rezultat testa poslat ćemo ti najkasnije tri dana nakon odabranog termina.
 Sretno i vidimo se!
 
 DUMP Udruga mladih programera`,
-      MessageStream: 'outbound',
-    });
+        MessageStream: 'outbound',
+      });
+    } else {
+      console.log('Email nije poslan jer je slanje onemogućeno.');
+    }
 
     return await this.prisma.internDiscipline.update({
       where: {
