@@ -12,6 +12,7 @@ export enum Path {
   Intern = '/admin/intern/:internId',
   Interview = '/admin/interview/:internId',
   Interviewers = '/admin/interviewers',
+  InterviewBuilder = '/admin/interview-builder',
   InterviewPicker = '/admin/interview-scheduler',
   TestScheduler = '/admin/test-scheduler',
   TestOverview = '/admin/test-overview/:testSlotId',

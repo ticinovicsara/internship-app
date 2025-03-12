@@ -11,7 +11,6 @@ import { seedQuestions } from './seedQuestions';
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.intern.deleteMany();
   await prisma.intern.createMany({
     data: [
       {

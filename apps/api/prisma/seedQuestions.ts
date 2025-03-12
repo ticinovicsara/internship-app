@@ -8,25 +8,12 @@ export async function seedQuestions() {
     interviewQuestions.map((q) =>
       prisma.interviewQuestion.upsert({
         where: { id: q.id },
-        update: {
-          title: q.title,
-          type: q.type,
-          category: q.category,
-          options: q.options ? JSON.stringify(q.options) : null,
-          min: q.min ?? null,
-          max: q.max ?? null,
-          step: q.step ?? null,
-          updatedAt: new Date(),
-        },
+        update: {},
         create: {
           id: q.id,
           title: q.title,
           type: q.type,
           category: q.category,
-          options: q.options ? JSON.stringify(q.options) : null,
-          min: q.min ?? null,
-          max: q.max ?? null,
-          step: q.step ?? null,
           createdAt: new Date(),
         },
       }),

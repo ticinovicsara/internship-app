@@ -18,7 +18,7 @@ import { QuestionsModule } from './questions/question.module';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', '..', 'web', 'dist'),
+      rootPath: join(__dirname, '..', '..', 'web', 'dist'),
       exclude: ['/api/(.*)'],
     }),
     LoggerModule,

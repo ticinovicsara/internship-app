@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { CreateQuestionDto } from './dto/createQuestion.dto';
 import { UpdateQuestionDto } from './dto/updateQuestion.dto';
-
-const prisma = new PrismaClient();
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class QuestionService {
+  constructor(private readonly prisma: PrismaService) {}
+
   async getAll() {
-    return await prisma.interviewQuestion.findMany();
+    return await this.prisma.interviewQuestion.findMany();
   }
 
   async create(question: CreateQuestionDto) {
-    return await prisma.interviewQuestion.create({
+    return await this.prisma.interviewQuestion.create({
       data: {
         title: question.title,
         type: question.type,
@@ -30,7 +30,7 @@ export class QuestionService {
   }
 
   async update(id: string, updateData: UpdateQuestionDto) {
-    return await prisma.interviewQuestion.update({
+    return await this.prisma.interviewQuestion.update({
       where: { id: String(id) },
       data: {
         title: updateData.title,
