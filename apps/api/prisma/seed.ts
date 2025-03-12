@@ -6,11 +6,12 @@ import {
   PrismaClient,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { interviewQuestions } from '../../web/src/pages/InterviewPage/data';
+import { seedQuestions } from './seedQuestions';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.intern.deleteMany();
   await prisma.intern.createMany({
     data: [
       {
@@ -286,15 +287,7 @@ async function main() {
     ],
   });
 
-  await prisma.interviewQuestion.createMany({
-    data: interviewQuestions.map((q) => ({
-      id: q.id,
-      title: q.title,
-      type: q.type,
-      category: q.category,
-      createdAt: new Date(),
-    })),
-  });
+  await seedQuestions();
 }
 
 main()
