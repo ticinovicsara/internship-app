@@ -43,7 +43,7 @@ export class QuestionController {
     return newQuestion;
   }
 
-  @Put(':id')
+  @Put('/update/:id')
   @UseGuards(JwtAuthGuard)
   async update(@Param('id') id: string, @Body() updateData: UpdateQuestionDto) {
     await this.loggerService.createAdminLog(

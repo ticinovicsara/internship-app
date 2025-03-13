@@ -1,9 +1,19 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateQuestionDto {
   @IsNotEmpty()
   @IsString()
   title: string;
-  type: string; // Mora biti prisutan
+
+  @IsNotEmpty()
+  @IsString()
+  type: string;
+
+  @IsNotEmpty()
+  @IsString()
   category: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  options: string[];
 }

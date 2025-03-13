@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { InterviewQuestion } from '@prisma/client';
 import { useQuestions } from '../../api/useFetchAllQuestions';
 import LogoHeader from '../../components/LogoHeader';
@@ -7,23 +7,93 @@ import {
   AccordionDetails,
   AccordionSummary,
   Button,
-  TextField,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import QuestionDetails from '../../components/InterviewBuilder/QuestionDetails';
+import AddQuestionForm from '../../components/InterviewBuilder/AddQuestionForm';
+import { useAddQuestion } from '../../api/useAddQuestion';
+import { useUpdateQuestions } from '../../api/useUpdateQuestion';
+
+type NewInterviewQuestion = Omit<InterviewQuestion, 'id'>;
 
 export const InterviewBuilderPage = () => {
   const { data: apiResponse, isLoading } = useQuestions();
   const [isEditing, setIsEditing] = useState(false);
   const [expanded, setExpanded] = useState<string | false>(false);
+  const [modifiedQuestions, setModifiedQuestions] = useState<
+    Map<string, Partial<InterviewQuestion>>
+  >(new Map());
 
-  const handleChange =
-    (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
-      setExpanded(isExpanded ? panel : false);
-    };
+  const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
 
-  const questions = Array.isArray(apiResponse) ? apiResponse : [];
+  const { mutate: addQuestion } = useAddQuestion();
+  const { mutateAsync: updateAllQuestions } = useUpdateQuestions();
+
+  useMemo(() => {
+    if (apiResponse && Array.isArray(apiResponse)) {
+      setQuestions(apiResponse);
+    }
+  }, [apiResponse]);
+
+  const handleChange = useCallback(
+    (panel: string) => (_event: React.SyntheticEvent) => {
+      setExpanded((prev) => (prev === panel ? false : panel));
+    },
+    [],
+  );
+
+  const handleSaveChanges = async () => {
+    const updatedQuestions = Array.from(modifiedQuestions.values()).map(
+      (modifiedQuestion) => {
+        return {
+          ...modifiedQuestion,
+          id: modifiedQuestion.id!,
+          title: modifiedQuestion.title!,
+          type: modifiedQuestion.type!,
+          category: modifiedQuestion.category!,
+          options: modifiedQuestion.options!,
+          createdAt: modifiedQuestion.createdAt!,
+          updatedAt: modifiedQuestion.updatedAt!,
+        };
+      },
+    );
+
+    if (updatedQuestions.length > 0) {
+      await updateAllQuestions(updatedQuestions);
+      console.log('Pitanja uspješno ažurirana!');
+      setModifiedQuestions(new Map());
+    } else {
+      console.log('Nema izmjena za spremiti.');
+    }
+  };
+
+  const handleAddQuestion = async (newQuestion: NewInterviewQuestion) => {
+    addQuestion(newQuestion, {
+      onSuccess: () => {
+        console.log('Pitanje uspješno dodano!');
+        setIsEditing(false);
+      },
+      onError: () => {
+        console.error('Dodavanje pitanja nije uspjelo.');
+      },
+    });
+  };
+
+  const handleUpdateQuestion = (
+    id: string,
+    updatedData: Partial<InterviewQuestion>,
+  ) => {
+    setModifiedQuestions((prevModifiedQuestions) => {
+      const updated = new Map(prevModifiedQuestions);
+      updated.set(id, updatedData);
+      return updated;
+    });
+
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) => (q.id === id ? { ...q, ...updatedData } : q)),
+    );
+  };
 
   if (isLoading) return <p>Loading...</p>;
 
@@ -40,14 +110,15 @@ export const InterviewBuilderPage = () => {
         }}
       >
         <h2>Trenutna pitanja</h2>
-        <Button variant="outlined" onClick={() => setIsEditing(true)}>
+        <Button variant="outlined" onClick={() => setIsEditing(!isEditing)}>
           Dodaj pitanje
         </Button>
-        <Button variant="outlined" onClick={() => setIsEditing(true)}>
+        <Button variant="outlined" onClick={handleSaveChanges}>
           Spremi promjene
         </Button>
       </div>
-      {isEditing && <p>Forma za dodavanje pitanja dolazi ovdje...</p>}
+
+      {isEditing && <AddQuestionForm onAddQuestion={handleAddQuestion} />}
 
       <ul>
         <div>
@@ -81,7 +152,7 @@ export const InterviewBuilderPage = () => {
                         color: 'text.secondary',
                         marginRight: '10px',
                         border: '1px solid orange',
-                        borderRadius: '2px',
+                        borderRadius: '5px',
                         padding: '5px',
                       }}
                     >
@@ -97,7 +168,12 @@ export const InterviewBuilderPage = () => {
                   </div>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <QuestionDetails question={q} />
+                  {expanded === q.id && (
+                    <QuestionDetails
+                      question={q}
+                      onUpdate={(data) => handleUpdateQuestion(q.id, data)}
+                    />
+                  )}
                 </AccordionDetails>
               </Accordion>
             ))

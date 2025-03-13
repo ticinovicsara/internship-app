@@ -198,10 +198,7 @@ model InterviewQuestion {
   title      String
   type       String
   category   String
-  options    String?  
-  min        Int? 
-  max        Int?
-  step       Int?
+  options    String[]  
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

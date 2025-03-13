@@ -1,21 +1,17 @@
-import { useMutation, useQueryClient } from 'react-query';
-import { api } from '.';
-import { Question } from '@internship-app/types';
+import { useMutation } from 'react-query';
+import axios from 'axios';
+import { InterviewQuestion } from '@prisma/client';
 
-const updateQuestion = async (updatedQuestion: Question) => {
-  const response = await api.put(
-    `/questions/${updatedQuestion.id}`,
-    updatedQuestion,
-  );
-  return response.data;
+const updateQuestionsOnWeb = async (questions: InterviewQuestion[]) => {
+  try {
+    const response = await axios.put('/api/questions/update', { questions });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating questions', error);
+    throw new Error('Failed to update questions');
+  }
 };
 
-export const useUpdateQuestion = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation(updateQuestion, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('questions');
-    },
-  });
+export const useUpdateQuestions = () => {
+  return useMutation(updateQuestionsOnWeb);
 };
