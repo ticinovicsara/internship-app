@@ -1,4 +1,5 @@
 import {
+  Discipline,
   Intern,
   InterviewStatus,
   MultistepQuestion,
@@ -38,6 +39,19 @@ const mapAnswersToQuestions = (
   }));
 };
 
+const UNIVERSAL_CATEGORIES = [
+  QuestionCategory.General,
+  QuestionCategory.Personal,
+  QuestionCategory.Final,
+];
+
+const DISCIPLINE_TO_CATEGORIES: Record<Discipline, QuestionCategory[]> = {
+  [Discipline.Development]: [QuestionCategory.Development],
+  [Discipline.Design]: [QuestionCategory.Design],
+  [Discipline.Marketing]: [QuestionCategory.Marketing],
+  [Discipline.Multimedia]: [QuestionCategory.Multimedia],
+};
+
 const InterviewPage = () => {
   const [, params] = useRoute(Path.Interview);
   const internId = params?.internId;
@@ -45,6 +59,14 @@ const InterviewPage = () => {
   const { data: intern, isFetching } = useFetchIntern(internId);
   const internDisciplines =
     intern?.internDisciplines.map((d) => d.discipline) || [];
+
+  const disciplineCategories = internDisciplines.flatMap(
+    (discipline) => DISCIPLINE_TO_CATEGORIES[discipline] || [],
+  );
+
+  const categoriesForAPI = [
+    ...new Set([...disciplineCategories, ...UNIVERSAL_CATEGORIES]),
+  ];
 
   const setInterview = useSetInterview(() => {
     navigate(Path.Intern.replace(':internId', params?.internId || ''));
@@ -55,7 +77,7 @@ const InterviewPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: interviewQuestions = [] } =
-    useFetchQuestionsByDiscipline(internDisciplines) ?? [];
+    useFetchQuestionsByDiscipline(categoriesForAPI) ?? [];
 
   const localFormValue = JSON.parse(
     localStorage.getItem(`interview ${internId}`)!,
@@ -63,6 +85,9 @@ const InterviewPage = () => {
   const form = useForm<FieldValues>({
     defaultValues: { ...localFormValue },
   });
+
+  console.log('Šaljem API poziv sa kategorijama:', categoriesForAPI);
+  console.log('interviewQuestions:', interviewQuestions);
 
   useEffect(() => {
     const formSaver = setInterval(() => {
@@ -187,6 +212,8 @@ const InterviewPage = () => {
         return baseQuestion as MultistepQuestion<QuestionCategory>;
     }
   });
+
+  console.log('Mapped Questions:', questions);
 
   return (
     <AdminPage>

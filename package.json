@@ -13,6 +13,6 @@
     "prisma": "yarn workspace api run prisma"
   },
   "devDependencies": {
-    "turbo": "^1.10.13"
+    "turbo": "^2.4.4"
   }
 }

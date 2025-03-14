@@ -1,21 +1,29 @@
 import { useQuery } from 'react-query';
 import { api } from '.';
-import { Discipline } from '@internship-app/types';
 import { InterviewQuestion } from '@prisma/client';
+import { QuestionCategory } from '../constants/interviewConstants';
 
 const fetchQuestionsByDiscipline = async (
-  discipline: Discipline[],
+  disciplines: QuestionCategory[],
 ): Promise<InterviewQuestion[]> => {
-  const { data } = await api.get(`/questions/category/${discipline}`);
-  return data;
+  const response = await api.get(
+    `http://localhost:3000/api/questions/category/${disciplines}`,
+  );
+
+  console.log('Raw Response:', response);
+  console.log('API Response Data:', response.data);
+
+  return response.data;
 };
 
-export const useFetchQuestionsByDiscipline = (discipline: Discipline[]) => {
+export const useFetchQuestionsByDiscipline = (
+  disciplines: QuestionCategory[],
+) => {
   return useQuery(
-    ['questions', discipline],
-    () => fetchQuestionsByDiscipline(discipline),
+    ['questions', disciplines],
+    () => fetchQuestionsByDiscipline(disciplines),
     {
-      enabled: !!discipline,
+      enabled: !!disciplines,
       staleTime: 1000 * 60 * 5,
     },
   );

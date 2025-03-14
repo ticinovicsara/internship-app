@@ -13,8 +13,6 @@ export const useAddQuestion = () => {
 
   return useMutation(addQuestion, {
     onSuccess: (newQuestion) => {
-      console.log('✅ API je vratio novo pitanje:', newQuestion);
-
       queryClient.setQueryData(
         'questions',
         (oldQuestions: InterviewQuestion[] | undefined) => [

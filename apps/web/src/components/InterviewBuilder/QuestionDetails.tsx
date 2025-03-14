@@ -1,5 +1,5 @@
 import { QuestionType } from '@internship-app/types';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Typography, TextField, Button, MenuItem } from '@mui/material';
 import { InterviewQuestion } from '@prisma/client';
 import { QuestionCategory } from '../../constants/interviewConstants';
@@ -17,20 +17,21 @@ const QuestionDetails = memo(({ question, onUpdate }: Props) => {
     question.options ? question.options : [],
   );
 
-  const updatedQuestionRef = useRef<Partial<InterviewQuestion>>({});
-
   useEffect(() => {
-    onUpdate({
-      title: editedTitle,
-      category: editedCategory,
-      type: editedType,
-      options,
-    });
-  }, [editedTitle, editedCategory, editedType, options, onUpdate]);
-
-  useEffect(() => {
-    onUpdate(updatedQuestionRef.current);
-  }, [onUpdate, updatedQuestionRef.current]);
+    if (
+      editedTitle !== question.title ||
+      editedCategory !== question.category ||
+      editedType !== question.type ||
+      options !== question.options
+    ) {
+      onUpdate({
+        title: editedTitle,
+        category: editedCategory,
+        type: editedType,
+        options,
+      });
+    }
+  }, [editedTitle, editedCategory, editedType, options, onUpdate, question]);
 
   const handleCategoryChange = (
     event: React.ChangeEvent<{ value: unknown }>,

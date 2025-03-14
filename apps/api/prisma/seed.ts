@@ -6,7 +6,6 @@ import {
   PrismaClient,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { seedQuestions } from './seedQuestions';
 
 const prisma = new PrismaClient();
 
@@ -285,8 +284,6 @@ async function main() {
       },
     ],
   });
-
-  await seedQuestions();
 }
 
 main()

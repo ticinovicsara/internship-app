@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateQuestionDto } from './dto/createQuestion.dto';
 import { UpdateQuestionDto } from './dto/updateQuestion.dto';
 import { PrismaService } from 'src/prisma.service';
+import { InterviewQuestion } from '@prisma/client';
 
 @Injectable()
 export class QuestionService {
@@ -11,10 +12,23 @@ export class QuestionService {
     return await this.prisma.interviewQuestion.findMany();
   }
 
-  async getByDiscipline(discipline: string) {
-    return await this.prisma.interviewQuestion.findMany({
-      where: { category: discipline },
+  async getByDisciplines(disciplines: string[]): Promise<InterviewQuestion[]> {
+    console.log('Dobijene discipline:', disciplines);
+
+    if (!disciplines || disciplines.length === 0) {
+      return [];
+    }
+
+    const questions = await this.prisma.interviewQuestion.findMany({
+      where: {
+        category: {
+          in: disciplines, // Filtriramo prema listi disciplina
+        },
+      },
     });
+
+    console.log('Vraćena pitanja:', questions);
+    return questions;
   }
 
   async create(question: CreateQuestionDto) {
@@ -45,6 +59,18 @@ export class QuestionService {
         type: question.type,
         category: question.category,
         options: question.options ?? null,
+      },
+    });
+  }
+
+  async getAnswersByQuestion(questionId: string) {
+    return await this.prisma.answer.findMany({
+      where: { questionId },
+      select: {
+        id: true,
+        internName: true,
+        answer: true,
+        questionId: true,
       },
     });
   }

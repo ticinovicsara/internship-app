@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AdminLogAction } from '@prisma/client';
@@ -31,11 +32,20 @@ export class QuestionController {
     return questions;
   }
 
-  @Get('/category/:discipline')
+  @Post('/category')
   @UseGuards(JwtAuthGuard)
-  async getByDiscipline(@Param('discipline') discipline: string) {
-    const questions = await this.questionsService.getByDiscipline(discipline);
-    return questions;
+  async getByDisciplines(@Body('disciplines') disciplines: string[]) {
+    console.log('Primljene kategorije:', disciplines);
+    return this.questionsService.getByDisciplines(disciplines);
+  }
+
+  @Get('/:questionId/answers')
+  @UseGuards(JwtAuthGuard)
+  async getAnswersByQuestion(@Param('questionId') questionId: string) {
+    const answers = await this.questionsService.getAnswersByQuestion(
+      questionId,
+    );
+    return answers;
   }
 
   @Post()

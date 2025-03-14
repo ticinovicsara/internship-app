@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { InterviewQuestion } from '@prisma/client';
 import { useQuestions } from '../../api/useFetchAllQuestions';
 import LogoHeader from '../../components/LogoHeader';
@@ -15,10 +15,9 @@ import AddQuestionForm from '../../components/InterviewBuilder/AddQuestionForm';
 import { useAddQuestion } from '../../api/useAddQuestion';
 import { useUpdateQuestions } from '../../api/useUpdateQuestion';
 import { useQueryClient } from 'react-query';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 
 export const InterviewBuilderPage = () => {
-  const navigate = useNavigate();
   const { data: apiResponse, isLoading } = useQuestions();
   const [isEditing, setIsEditing] = useState(false);
   const [expanded, setExpanded] = useState<string | false>(false);
@@ -26,21 +25,22 @@ export const InterviewBuilderPage = () => {
     Map<string, Partial<InterviewQuestion>>
   >(new Map());
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
 
   const { mutate: addQuestion } = useAddQuestion();
   const { mutateAsync: updateAllQuestions } = useUpdateQuestions();
 
-  useMemo(() => {
+  useEffect(() => {
     if (Array.isArray(apiResponse)) {
       setQuestions(apiResponse);
     }
   }, [apiResponse]);
 
   const handleChange = useCallback(
-    (panel: string) => (_event: React.SyntheticEvent) => {
-      setExpanded((prev) => (prev === panel ? false : panel));
+    (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
+      setExpanded(isExpanded ? panel : false);
     },
     [],
   );
@@ -119,9 +119,15 @@ export const InterviewBuilderPage = () => {
       return updated;
     });
 
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((q) => (q.id === id ? { ...q, ...updatedData } : q)),
-    );
+    setQuestions((prevQuestions) => {
+      const index = prevQuestions.findIndex((q) => q.id === id);
+      if (index === -1) return prevQuestions;
+
+      const updatedQuestions = [...prevQuestions];
+      updatedQuestions[index] = { ...updatedQuestions[index], ...updatedData };
+
+      return updatedQuestions;
+    });
   };
 
   const handleDisableQuestion = (id: string) => {
@@ -131,9 +137,17 @@ export const InterviewBuilderPage = () => {
       ),
     );
 
-    setModifiedQuestions((prev) => {
-      const updated = new Map(prev);
-      updated.set(id, { isDisabled: !prev.get(id)?.isDisabled });
+    setModifiedQuestions((prevModifiedQuestions) => {
+      const existingQuestion = questions.find((q) => q.id === id);
+      if (!existingQuestion) return prevModifiedQuestions;
+
+      const wasDisabled = existingQuestion.isDisabled;
+      const newDisabledState = !wasDisabled;
+
+      if (wasDisabled === newDisabledState) return prevModifiedQuestions;
+
+      const updated = new Map(prevModifiedQuestions);
+      updated.set(id, { isDisabled: newDisabledState });
       return updated;
     });
   };
@@ -225,7 +239,7 @@ export const InterviewBuilderPage = () => {
                     </Button>
                     <Button
                       variant="outlined"
-                      onClick={() => navigate(`/stats/${q.id}`)}
+                      onClick={() => setLocation(`/stats/${q.id}`)}
                     >
                       STATS
                     </Button>
