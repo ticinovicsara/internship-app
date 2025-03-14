@@ -14,16 +14,18 @@ import QuestionDetails from '../../components/InterviewBuilder/QuestionDetails';
 import AddQuestionForm from '../../components/InterviewBuilder/AddQuestionForm';
 import { useAddQuestion } from '../../api/useAddQuestion';
 import { useUpdateQuestions } from '../../api/useUpdateQuestion';
-
-type NewInterviewQuestion = Omit<InterviewQuestion, 'id'>;
+import { useQueryClient } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 
 export const InterviewBuilderPage = () => {
+  const navigate = useNavigate();
   const { data: apiResponse, isLoading } = useQuestions();
   const [isEditing, setIsEditing] = useState(false);
   const [expanded, setExpanded] = useState<string | false>(false);
   const [modifiedQuestions, setModifiedQuestions] = useState<
     Map<string, Partial<InterviewQuestion>>
   >(new Map());
+  const queryClient = useQueryClient();
 
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
 
@@ -31,7 +33,7 @@ export const InterviewBuilderPage = () => {
   const { mutateAsync: updateAllQuestions } = useUpdateQuestions();
 
   useMemo(() => {
-    if (apiResponse && Array.isArray(apiResponse)) {
+    if (Array.isArray(apiResponse)) {
       setQuestions(apiResponse);
     }
   }, [apiResponse]);
@@ -64,6 +66,9 @@ export const InterviewBuilderPage = () => {
         type: string;
         category: string;
         options: string[];
+        min: number;
+        max: number;
+        step: number;
         createdAt: Date;
         updatedAt: Date;
         isDisabled: boolean;
@@ -72,21 +77,33 @@ export const InterviewBuilderPage = () => {
       await updateAllQuestions(validQuestions);
       console.log('Ažurirana pitanja su uspješno spremljena!');
       setModifiedQuestions(new Map());
+      queryClient.invalidateQueries(['questions']);
     } catch (error) {
       console.error('Greška pri spremanju izmjena:', error);
     }
   };
 
-  const handleAddQuestion = async (newQuestion: NewInterviewQuestion) => {
-    addQuestion(newQuestion, {
-      onSuccess: () => {
-        console.log('Pitanje uspješno dodano!');
-        setIsEditing(false);
-      },
-      onError: () => {
-        console.error('Dodavanje pitanja nije uspjelo.');
-      },
-    });
+  const handleAddQuestion = async (newQuestion: InterviewQuestion) => {
+    console.log('📢 Pozivam addQuestion s:', newQuestion);
+
+    try {
+      addQuestion(newQuestion, {
+        onSuccess: (addedQuestion) => {
+          console.log('Pitanje uspješno dodano!', addedQuestion);
+          setIsEditing(false);
+          setQuestions((prevQuestions) => [...prevQuestions, addedQuestion]);
+
+          setTimeout(() => {
+            queryClient.invalidateQueries(['questions']);
+          }, 1000);
+        },
+        onError: (error) => {
+          console.error('Dodavanje pitanja nije uspjelo.', error);
+        },
+      });
+    } catch (error) {
+      console.error('Greška pri dodavanju pitanja:', error);
+    }
   };
 
   const handleUpdateQuestion = (
@@ -121,7 +138,9 @@ export const InterviewBuilderPage = () => {
     });
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading || !apiResponse) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div>
@@ -204,7 +223,12 @@ export const InterviewBuilderPage = () => {
                     >
                       {q.isDisabled ? 'ENABLE' : 'DISABLE'}
                     </Button>
-                    <Button variant="outlined">STATS</Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate(`/stats/${q.id}`)}
+                    >
+                      STATS
+                    </Button>
                   </div>
                 </AccordionSummary>
                 <AccordionDetails>

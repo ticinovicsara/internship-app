@@ -13,6 +13,7 @@ export enum Path {
   Interview = '/admin/interview/:internId',
   Interviewers = '/admin/interviewers',
   InterviewBuilder = '/admin/interview-builder',
+  QuestionsStats = '/admin/stats/:questionId',
   InterviewPicker = '/admin/interview-scheduler',
   TestScheduler = '/admin/test-scheduler',
   TestOverview = '/admin/test-overview/:testSlotId',

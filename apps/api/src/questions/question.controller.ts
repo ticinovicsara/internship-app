@@ -58,7 +58,6 @@ export class QuestionController {
       `Ažuriranje ${updatedQuestions.length} pitanja`,
     );
 
-    console.log('PRIMLJENI PODACI:', updatedQuestions);
     const results = await Promise.all(
       updatedQuestions.map(async (question) => {
         if (

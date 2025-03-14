@@ -5,7 +5,7 @@ import { QuestionCategory } from '../../constants/interviewConstants';
 import { InterviewQuestion } from '@prisma/client';
 
 type Props = {
-  onAddQuestion: (newQuestion: Omit<InterviewQuestion, 'id'>) => void;
+  onAddQuestion: (newQuestion: InterviewQuestion) => void;
 };
 
 const AddQuestionForm = ({ onAddQuestion }: Props) => {
@@ -42,16 +42,18 @@ const AddQuestionForm = ({ onAddQuestion }: Props) => {
     if (!title || !category || !type) return;
 
     onAddQuestion({
+      id: '',
       title,
       category,
       type,
       options: options,
+      min: 0,
+      max: 0,
+      step: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
       isDisabled: false,
     });
-
-    console.log(options);
 
     setTitle('');
     setCategory('');

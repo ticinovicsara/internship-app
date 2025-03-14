@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "InterviewQuestion" ADD COLUMN     "max" INTEGER DEFAULT 0,
+ADD COLUMN     "min" INTEGER DEFAULT 0,
+ADD COLUMN     "step" INTEGER DEFAULT 0;

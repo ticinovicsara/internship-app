@@ -27,6 +27,7 @@ import TestPage from './pages/TestPage';
 import TestReviewPage from './pages/TestReviewPage';
 import TestSchedulerPage from './pages/TestSchedulerPage';
 import { InterviewBuilderPage } from './pages/InterviewBuilderPage';
+import { StatsPage } from './pages/InterviewBuilderPage/StatsPage';
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ export const App = () => {
               path={Path.InterviewBuilder}
               component={InterviewBuilderPage}
             ></Route>
+            <Route path="/stats/:id" component={StatsPage} />
             <Route path={Path.InterviewPicker} component={AdminInterviewPage} />
             <Route
               path={Path.ScheduleInterview}

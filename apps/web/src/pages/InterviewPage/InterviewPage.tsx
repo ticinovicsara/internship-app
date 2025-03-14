@@ -1,4 +1,9 @@
-import { Intern, InterviewStatus, QuestionType } from '@internship-app/types';
+import {
+  Intern,
+  InterviewStatus,
+  MultistepQuestion,
+  QuestionType,
+} from '@internship-app/types';
 import { Json } from '@internship-app/types/src/json';
 import { useEffect, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
@@ -20,11 +25,14 @@ import {
 } from '../../constants/interviewConstants';
 import { Path } from '../../constants/paths';
 import InterviewQuestionHandler from './InterviewQuestionHandler';
+import { useFetchQuestionsByDiscipline } from '../../api/useFetchQuestionsByDiscipline';
+import { InterviewQuestion } from '@prisma/client';
 
 const mapAnswersToQuestions = (
   answers: FieldValues,
+  questions: InterviewQuestion[],
 ): { [key: number]: Json } => {
-  return interviewQuestions.map((q: { id: string }) => ({
+  return questions.map((q) => ({
     ...q,
     ...answers[q.id],
   }));
@@ -35,6 +43,9 @@ const InterviewPage = () => {
   const internId = params?.internId;
 
   const { data: intern, isFetching } = useFetchIntern(internId);
+  const internDisciplines =
+    intern?.internDisciplines.map((d) => d.discipline) || [];
+
   const setInterview = useSetInterview(() => {
     navigate(Path.Intern.replace(':internId', params?.internId || ''));
   });
@@ -43,11 +54,14 @@ const InterviewPage = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { data: interviewQuestions = [] } =
+    useFetchQuestionsByDiscipline(internDisciplines) ?? [];
+
   const localFormValue = JSON.parse(
     localStorage.getItem(`interview ${internId}`)!,
   );
   const form = useForm<FieldValues>({
-    defaultValues: { ...defaultInterviewValues, ...localFormValue },
+    defaultValues: { ...localFormValue },
   });
 
   useEffect(() => {
@@ -74,12 +88,12 @@ const InterviewPage = () => {
       }),
       {},
     );
-    form.reset({ ...defaultInterviewValues, ...answersValues });
+    form.reset({ ...answersValues });
   }, [form, intern]);
 
   const handleFormSubmit = (internId: string) =>
     form.handleSubmit((data) => {
-      const answers = mapAnswersToQuestions(data);
+      const answers = mapAnswersToQuestions(data, interviewQuestions);
       const score = Object.values(answers)
         .filter(
           (a) =>
@@ -138,6 +152,42 @@ const InterviewPage = () => {
     );
   }
 
+  const questions: MultistepQuestion<QuestionCategory>[] = (
+    interviewQuestions ?? []
+  ).map((q) => {
+    const baseQuestion = {
+      id: q.id,
+      title: q.title,
+      category: q.category as QuestionCategory,
+      type: q.type as QuestionType,
+    };
+
+    switch (q.type) {
+      case QuestionType.Slider:
+        return {
+          ...baseQuestion,
+          min: q.min ?? 0,
+          max: q.max ?? 10,
+          step: q.step ?? 1,
+        } as MultistepQuestion<QuestionCategory>;
+      case QuestionType.Checkbox:
+      case QuestionType.Radio:
+      case QuestionType.Select:
+        return {
+          ...baseQuestion,
+          options: q.options ?? [],
+        } as MultistepQuestion<QuestionCategory>;
+      case QuestionType.Number:
+        return {
+          ...baseQuestion,
+          min: q.min,
+          max: q.max,
+        } as MultistepQuestion<QuestionCategory>;
+      default:
+        return baseQuestion as MultistepQuestion<QuestionCategory>;
+    }
+  });
+
   return (
     <AdminPage>
       <IntervieweeInfo
@@ -146,7 +196,7 @@ const InterviewPage = () => {
         intern={intern}
       />
       <MultistepForm
-        questions={interviewQuestions}
+        questions={questions}
         form={form}
         steps={getFilteredInterviewSteps(
           intern.internDisciplines.map((ind) => ind.discipline),
