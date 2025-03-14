@@ -44,27 +44,36 @@ export const InterviewBuilderPage = () => {
   );
 
   const handleSaveChanges = async () => {
-    const updatedQuestions = Array.from(modifiedQuestions.values()).map(
-      (modifiedQuestion) => {
-        return {
-          ...modifiedQuestion,
-          id: modifiedQuestion.id!,
-          title: modifiedQuestion.title!,
-          type: modifiedQuestion.type!,
-          category: modifiedQuestion.category!,
-          options: modifiedQuestion.options!,
-          createdAt: modifiedQuestion.createdAt!,
-          updatedAt: modifiedQuestion.updatedAt!,
-        };
-      },
+    if (modifiedQuestions.size === 0) {
+      console.log('Nema izmjena za spremiti.');
+      return;
+    }
+
+    const updatedQuestions = Array.from(modifiedQuestions.entries()).map(
+      ([id, updatedData]) => ({
+        id,
+        ...updatedData,
+        updatedAt: new Date(),
+      }),
     );
 
-    if (updatedQuestions.length > 0) {
-      await updateAllQuestions(updatedQuestions);
-      console.log('Pitanja uspješno ažurirana!');
+    try {
+      const validQuestions = updatedQuestions as {
+        id: string;
+        title: string;
+        type: string;
+        category: string;
+        options: string[];
+        createdAt: Date;
+        updatedAt: Date;
+        isDisabled: boolean;
+      }[];
+
+      await updateAllQuestions(validQuestions);
+      console.log('Ažurirana pitanja su uspješno spremljena!');
       setModifiedQuestions(new Map());
-    } else {
-      console.log('Nema izmjena za spremiti.');
+    } catch (error) {
+      console.error('Greška pri spremanju izmjena:', error);
     }
   };
 
@@ -85,14 +94,31 @@ export const InterviewBuilderPage = () => {
     updatedData: Partial<InterviewQuestion>,
   ) => {
     setModifiedQuestions((prevModifiedQuestions) => {
+      const existingChanges = prevModifiedQuestions.get(id) || {};
       const updated = new Map(prevModifiedQuestions);
-      updated.set(id, updatedData);
+
+      updated.set(id, { ...existingChanges, ...updatedData });
+
       return updated;
     });
 
     setQuestions((prevQuestions) =>
       prevQuestions.map((q) => (q.id === id ? { ...q, ...updatedData } : q)),
     );
+  };
+
+  const handleDisableQuestion = (id: string) => {
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) =>
+        q.id === id ? { ...q, isDisabled: !q.isDisabled } : q,
+      ),
+    );
+
+    setModifiedQuestions((prev) => {
+      const updated = new Map(prev);
+      updated.set(id, { isDisabled: !prev.get(id)?.isDisabled });
+      return updated;
+    });
   };
 
   if (isLoading) return <p>Loading...</p>;
@@ -113,7 +139,11 @@ export const InterviewBuilderPage = () => {
         <Button variant="outlined" onClick={() => setIsEditing(!isEditing)}>
           Dodaj pitanje
         </Button>
-        <Button variant="outlined" onClick={handleSaveChanges}>
+        <Button
+          variant="outlined"
+          onClick={handleSaveChanges}
+          disabled={modifiedQuestions.size === 0}
+        >
           Spremi promjene
         </Button>
       </div>
@@ -128,7 +158,11 @@ export const InterviewBuilderPage = () => {
                 key={q.id}
                 expanded={expanded === q.id}
                 onChange={handleChange(q.id)}
-                style={{ marginBottom: '15px' }}
+                style={{
+                  marginBottom: '15px',
+                  backgroundColor: q.isDisabled ? '#e0e0e0' : 'white',
+                  opacity: q.isDisabled ? 0.6 : 1,
+                }}
               >
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -163,7 +197,13 @@ export const InterviewBuilderPage = () => {
                     >
                       {q.type}
                     </Typography>
-                    <Button variant="outlined">DISABLE</Button>
+                    <Button
+                      variant="outlined"
+                      style={{ backgroundColor: 'white' }}
+                      onClick={() => handleDisableQuestion(q.id)}
+                    >
+                      {q.isDisabled ? 'ENABLE' : 'DISABLE'}
+                    </Button>
                     <Button variant="outlined">STATS</Button>
                   </div>
                 </AccordionSummary>

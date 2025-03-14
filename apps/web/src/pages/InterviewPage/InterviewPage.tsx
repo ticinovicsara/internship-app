@@ -19,13 +19,15 @@ import {
   QuestionCategory,
 } from '../../constants/interviewConstants';
 import { Path } from '../../constants/paths';
-import { defaultInterviewValues, interviewQuestions } from './data';
 import InterviewQuestionHandler from './InterviewQuestionHandler';
 
 const mapAnswersToQuestions = (
   answers: FieldValues,
 ): { [key: number]: Json } => {
-  return interviewQuestions.map((q) => ({ ...q, ...answers[q.id] }));
+  return interviewQuestions.map((q: { id: string }) => ({
+    ...q,
+    ...answers[q.id],
+  }));
 };
 
 const InterviewPage = () => {

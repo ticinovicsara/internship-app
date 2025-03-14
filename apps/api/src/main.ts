@@ -13,6 +13,12 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Internship API')
     .setDescription('The internship API description')

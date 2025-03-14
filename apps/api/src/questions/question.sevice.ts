@@ -11,6 +11,12 @@ export class QuestionService {
     return await this.prisma.interviewQuestion.findMany();
   }
 
+  async getByDiscipline(discipline: string) {
+    return await this.prisma.interviewQuestion.findMany({
+      where: { category: discipline },
+    });
+  }
+
   async create(question: CreateQuestionDto) {
     return await this.prisma.interviewQuestion.create({
       data: {
@@ -31,23 +37,14 @@ export class QuestionService {
     });
   }
 
-  async update(id: string, updateData: UpdateQuestionDto) {
-    return await this.prisma.interviewQuestion.update({
-      where: { id: String(id) },
+  async update(question: UpdateQuestionDto) {
+    return this.prisma.interviewQuestion.update({
+      where: { id: question.id },
       data: {
-        title: updateData.title,
-        type: updateData.type,
-        category: updateData.category,
-        options: updateData.options,
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        options: true,
-        category: true,
-        createdAt: true,
-        updatedAt: true,
+        title: question.title,
+        type: question.type,
+        category: question.category,
+        options: question.options ?? null,
       },
     });
   }

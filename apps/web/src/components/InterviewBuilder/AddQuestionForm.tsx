@@ -48,6 +48,7 @@ const AddQuestionForm = ({ onAddQuestion }: Props) => {
       options: options,
       createdAt: new Date(),
       updatedAt: new Date(),
+      isDisabled: false,
     });
 
     console.log(options);

@@ -31,6 +31,13 @@ export class QuestionController {
     return questions;
   }
 
+  @Get('/category/:discipline')
+  @UseGuards(JwtAuthGuard)
+  async getByDiscipline(@Param('discipline') discipline: string) {
+    const questions = await this.questionsService.getByDiscipline(discipline);
+    return questions;
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@Body() question: CreateQuestionDto) {
@@ -43,15 +50,33 @@ export class QuestionController {
     return newQuestion;
   }
 
-  @Put('/update/:id')
+  @Put('/update')
   @UseGuards(JwtAuthGuard)
-  async update(@Param('id') id: string, @Body() updateData: UpdateQuestionDto) {
+  async updateAll(@Body() updatedQuestions: UpdateQuestionDto[]) {
     await this.loggerService.createAdminLog(
       AdminLogAction.Update,
-      `Uređivanje pitanja sa ID: ${id}`,
+      `Ažuriranje ${updatedQuestions.length} pitanja`,
     );
 
-    const updatedQuestion = await this.questionsService.update(id, updateData);
-    return updatedQuestion;
+    console.log('PRIMLJENI PODACI:', updatedQuestions);
+    const results = await Promise.all(
+      updatedQuestions.map(async (question) => {
+        if (
+          question.type !== 'Select' &&
+          question.type !== 'Radio' &&
+          question.type !== 'Checkbox'
+        ) {
+          question.options = undefined;
+        }
+
+        return await this.questionsService.update(question);
+      }),
+    );
+
+    return {
+      status: 'success',
+      message: `${updatedQuestions.length} questions updated successfully`,
+      data: results,
+    };
   }
 }

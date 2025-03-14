@@ -1,6 +1,10 @@
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateQuestionDto {
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
   @IsOptional()
   @IsString()
   title?: string;
@@ -15,5 +19,6 @@ export class UpdateQuestionDto {
 
   @IsOptional()
   @IsArray()
+  @IsString({ each: true })
   options?: string[];
 }
