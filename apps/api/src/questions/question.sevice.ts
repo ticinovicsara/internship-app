@@ -13,8 +13,6 @@ export class QuestionService {
   }
 
   async getByDisciplines(disciplines: string[]): Promise<InterviewQuestion[]> {
-    console.log('Dobijene discipline:', disciplines);
-
     if (!disciplines || disciplines.length === 0) {
       return [];
     }
@@ -22,12 +20,10 @@ export class QuestionService {
     const questions = await this.prisma.interviewQuestion.findMany({
       where: {
         category: {
-          in: disciplines, // Filtriramo prema listi disciplina
+          in: disciplines,
         },
       },
     });
-
-    console.log('Vraćena pitanja:', questions);
     return questions;
   }
 

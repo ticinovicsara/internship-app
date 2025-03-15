@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { CircularProgress, Typography, Card, CardContent } from '@mui/material';
 import LogoHeader from '../../components/LogoHeader';
-import { useFetchAnswers } from '../../api/uesFetchAnswers';
+import { useFetchAnswers } from '../../api/useFetchAnswers';
 
 export const StatsPage = () => {
   const { questionId } = useParams();

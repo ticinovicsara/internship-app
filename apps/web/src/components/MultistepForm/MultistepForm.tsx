@@ -1,14 +1,14 @@
-import { MultistepQuestion, Question } from '@internship-app/types';
 import { Box, Button, Step, StepLabel, Stepper } from '@mui/material';
 import { useState } from 'react';
+import { MultistepQuestion } from '@internship-app/types';
 
 interface Step<T> {
   label: string;
   category: T;
 }
 
-type HandlerProps<FH> = {
-  question: Question;
+type HandlerProps<T, FH> = {
+  question: MultistepQuestion<T>;
   form: FH;
 };
 
@@ -17,7 +17,7 @@ type MultistepFormProps<T, FH> = {
   questions: MultistepQuestion<T>[];
   form: FH;
   onSubmit: () => void;
-  InputHandler: React.FC<HandlerProps<FH>>;
+  InputHandler: React.FC<HandlerProps<T, FH>>;
 };
 
 const MultistepForm = <T, FH>({

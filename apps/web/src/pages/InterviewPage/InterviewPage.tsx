@@ -6,7 +6,7 @@ import {
   QuestionType,
 } from '@internship-app/types';
 import { Json } from '@internship-app/types/src/json';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
 import { LoaderIcon } from 'react-hot-toast';
 import { useQueryClient } from 'react-query';
@@ -26,7 +26,7 @@ import {
 } from '../../constants/interviewConstants';
 import { Path } from '../../constants/paths';
 import InterviewQuestionHandler from './InterviewQuestionHandler';
-import { useFetchQuestionsByDiscipline } from '../../api/useFetchQuestionsByDiscipline';
+import { useFetchQuestionsByDisciplines } from '../../api/useFetchQuestionsByDiscipline';
 import { InterviewQuestion } from '@prisma/client';
 
 const mapAnswersToQuestions = (
@@ -38,12 +38,6 @@ const mapAnswersToQuestions = (
     ...answers[q.id],
   }));
 };
-
-const UNIVERSAL_CATEGORIES = [
-  QuestionCategory.General,
-  QuestionCategory.Personal,
-  QuestionCategory.Final,
-];
 
 const DISCIPLINE_TO_CATEGORIES: Record<Discipline, QuestionCategory[]> = {
   [Discipline.Development]: [QuestionCategory.Development],
@@ -64,10 +58,6 @@ const InterviewPage = () => {
     (discipline) => DISCIPLINE_TO_CATEGORIES[discipline] || [],
   );
 
-  const categoriesForAPI = [
-    ...new Set([...disciplineCategories, ...UNIVERSAL_CATEGORIES]),
-  ];
-
   const setInterview = useSetInterview(() => {
     navigate(Path.Intern.replace(':internId', params?.internId || ''));
   });
@@ -76,8 +66,13 @@ const InterviewPage = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const memoizedDisciplines = useMemo(
+    () => disciplineCategories,
+    [disciplineCategories],
+  );
+
   const { data: interviewQuestions = [] } =
-    useFetchQuestionsByDiscipline(categoriesForAPI) ?? [];
+    useFetchQuestionsByDisciplines(memoizedDisciplines);
 
   const localFormValue = JSON.parse(
     localStorage.getItem(`interview ${internId}`)!,
@@ -85,9 +80,6 @@ const InterviewPage = () => {
   const form = useForm<FieldValues>({
     defaultValues: { ...localFormValue },
   });
-
-  console.log('Šaljem API poziv sa kategorijama:', categoriesForAPI);
-  console.log('interviewQuestions:', interviewQuestions);
 
   useEffect(() => {
     const formSaver = setInterval(() => {
@@ -101,10 +93,11 @@ const InterviewPage = () => {
   });
 
   useEffect(() => {
+    if (!intern) return;
+
     const internAnswers = Object.values(
       intern?.interviewSlot?.answers || {},
     ) as unknown as Json[];
-    if (!internAnswers.length) return;
 
     const answersValues = Object.values(internAnswers).reduce(
       (acc, curr) => ({
@@ -179,12 +172,17 @@ const InterviewPage = () => {
 
   const questions: MultistepQuestion<QuestionCategory>[] = (
     interviewQuestions ?? []
-  ).map((q) => {
+  ).map((q: InterviewQuestion) => {
     const baseQuestion = {
       id: q.id,
-      title: q.title,
+      title: q.title ?? 'Untitled',
       category: q.category as QuestionCategory,
       type: q.type as QuestionType,
+      options: 'options' in q ? q.options ?? [] : [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDisabled: false,
+      required: false,
     };
 
     switch (q.type) {
@@ -212,8 +210,6 @@ const InterviewPage = () => {
         return baseQuestion as MultistepQuestion<QuestionCategory>;
     }
   });
-
-  console.log('Mapped Questions:', questions);
 
   return (
     <AdminPage>

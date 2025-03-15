@@ -27,6 +27,7 @@ const Actions = <T extends PropertyKey, R>({
     type: QuestionType.Select,
     options: ['', ...Object.keys(options)],
     registerValue: '',
+    required: false,
   };
 
   const handleFormSubmit = form.handleSubmit((data) => handleSubmit(data as R));

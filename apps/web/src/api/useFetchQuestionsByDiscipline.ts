@@ -1,30 +1,42 @@
 import { useQuery } from 'react-query';
 import { api } from '.';
-import { InterviewQuestion } from '@prisma/client';
 import { QuestionCategory } from '../constants/interviewConstants';
 
-const fetchQuestionsByDiscipline = async (
-  disciplines: QuestionCategory[],
-): Promise<InterviewQuestion[]> => {
-  const response = await api.get(
-    `http://localhost:3000/api/questions/category/${disciplines}`,
-  );
+const UNIVERSAL_CATEGORIES: QuestionCategory[] = [
+  QuestionCategory.General,
+  QuestionCategory.Final,
+  QuestionCategory.Personal,
+];
 
-  console.log('Raw Response:', response);
-  console.log('API Response Data:', response.data);
+const fetchQuestionsByDisciplines = async (categories: QuestionCategory[]) => {
+  try {
+    const response = await api.post(
+      `http://localhost:3000/api/questions/category`,
+      {
+        disciplines: categories,
+      },
+    );
 
-  return response.data;
+    return response;
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    return [];
+  }
 };
 
-export const useFetchQuestionsByDiscipline = (
+export const useFetchQuestionsByDisciplines = (
   disciplines: QuestionCategory[],
 ) => {
+  const allCategories = [...new Set([...UNIVERSAL_CATEGORIES, ...disciplines])];
+
   return useQuery(
-    ['questions', disciplines],
-    () => fetchQuestionsByDiscipline(disciplines),
+    ['questions', allCategories],
+    async () => {
+      const data = await fetchQuestionsByDisciplines(allCategories);
+      return Array.isArray(data) ? data : [];
+    },
     {
-      enabled: !!disciplines,
-      staleTime: 1000 * 60 * 5,
+      enabled: allCategories.length > 0,
     },
   );
 };

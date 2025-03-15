@@ -199,12 +199,12 @@ model InterviewQuestion {
   type       String
   category   String
   options    String[]  
-  min        Int? @default(0) 
-  max        Int?@default(0) 
-  step       Int?@default(0) 
+  min        Int?     @default(1) 
+  max        Int?     @default(5) 
+  step       Int?     @default(1) 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  isDisabled Boolean @default(false)
+  isDisabled Boolean  @default(false)
   answers Answer[]
 }
 

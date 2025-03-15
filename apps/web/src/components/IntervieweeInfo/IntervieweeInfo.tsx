@@ -40,8 +40,8 @@ const IntervieweeInfo = ({ image, setImage, intern }: IntervieweeInfoProps) => {
 
         <div className={styles.notesContainer}>
           <b>Notes</b>
-          {intern.notes.split('\n').map((note) => (
-            <p>{note}</p>
+          {intern.notes.split('\n').map((note, index) => (
+            <p key={index}>{note}</p>
           ))}
         </div>
 

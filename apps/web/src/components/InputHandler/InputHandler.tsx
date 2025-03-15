@@ -15,6 +15,12 @@ import {
   FieldValues,
   UseFormReturn,
 } from 'react-hook-form';
+import { InterviewQuestion } from '@prisma/client';
+
+type ExtendedQuestion = InterviewQuestion & {
+  required?: boolean;
+  registerValue?: any;
+};
 
 type InputHandlerProps = {
   question: Question;
@@ -48,9 +54,9 @@ const getInputComponent = (
           {...field}
           marks
           valueLabelDisplay="auto"
-          step={question.step}
-          min={question.min}
-          max={question.max}
+          step={question.step || 1}
+          min={question.min || 1}
+          max={question.max || 5}
         />
       );
     case QuestionType.Checkbox:
