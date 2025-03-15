@@ -42,8 +42,6 @@ model Intern {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   logs              InternLog[]
-
-  InternAnswer InternAnswer[]
 }
 
 model InternDiscipline {
@@ -207,15 +205,4 @@ model InterviewQuestion {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   isDisabled Boolean  @default(false)
-}
-
-model InternAnswer {
-  id         String  @id @default(uuid())
-  internId   String
-  intern     Intern  @relation(fields: [internId], references: [id])
-  questionId String
-  answer     String
-  tick       Boolean
-
-  @@unique([internId, questionId])
 }

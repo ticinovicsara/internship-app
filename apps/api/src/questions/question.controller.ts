@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Put,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Put, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AdminLogAction } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
@@ -36,15 +27,6 @@ export class QuestionController {
   @UseGuards(JwtAuthGuard)
   async getByDisciplines(@Body('disciplines') disciplines: string[]) {
     return this.questionsService.getByDisciplines(disciplines);
-  }
-
-  @Get('/answers/:questionId')
-  @UseGuards(JwtAuthGuard)
-  async getAnswersByQuestion(@Param('questionId') questionId: string) {
-    const answers = await this.questionsService.getAnswersByQuestion(
-      questionId,
-    );
-    return answers;
   }
 
   @Post()

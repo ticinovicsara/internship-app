@@ -1,17 +1,22 @@
-import { InternAnswer } from '@prisma/client';
-import { api } from '.';
 import { useQuery } from 'react-query';
+import { api } from '.';
+import { AnswersWithIntern } from '@internship-app/types';
 
-const fetchAnswers = async (questionId: string) => {
-  if (!questionId) return [];
-  const response = await api.get<InternAnswer[]>(
-    `http://localhost:3000/api/answers/questionId=${questionId}`,
+const fetchAnswersForQuestion = async (
+  questionId: string,
+): Promise<AnswersWithIntern[]> => {
+  const response = await api.get(
+    `http://localhost:3000/api/interview-slot/answers/${questionId}`,
   );
-  return response.data;
+  return response.data; // Ovdje vraćamo podatke tipa AnswersWithIntern[]
 };
 
-export const useFetchAnswers = (questionId?: string) => {
-  return useQuery(['answers', questionId], () => fetchAnswers(questionId!), {
-    enabled: !!questionId,
-  });
+export const useFetchAnswersForQuestion = (questionId: string) => {
+  return useQuery<AnswersWithIntern[], Error>(
+    ['answers', questionId],
+    () => fetchAnswersForQuestion(questionId),
+    {
+      enabled: !!questionId, // Enable query only if questionId exists
+    },
+  );
 };

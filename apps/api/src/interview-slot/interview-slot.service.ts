@@ -304,4 +304,48 @@ dump.hr`,
       },
     });
   }
+
+  async getAnswersForQuestion(questionId: string) {
+    const interviewSlots = await this.prisma.interviewSlot.findMany({
+      where: {
+        answers: {
+          path: ['questionId'],
+          equals: questionId,
+        },
+      },
+      select: {
+        internId: true,
+        answers: true,
+      },
+    });
+
+    const answersWithIntern = await Promise.all(
+      interviewSlots.map(async (slot) => {
+        const intern = await this.prisma.intern.findUnique({
+          where: { id: slot.internId },
+          select: { firstName: true, lastName: true },
+        });
+
+        const answers = (
+          JSON.parse(slot.answers as string) as {
+            questionId: string;
+            answer: string;
+            tick: boolean;
+          }[]
+        ).filter((answer) => answer.questionId === questionId);
+
+        return {
+          internId: slot.internId,
+          internFirstName: intern?.firstName,
+          internLastName: intern?.lastName,
+          answers: answers.map((answer) => ({
+            answer: answer.answer,
+            tick: answer.tick,
+          })),
+        };
+      }),
+    );
+
+    return answersWithIntern;
+  }
 }

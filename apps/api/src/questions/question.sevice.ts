@@ -58,42 +58,4 @@ export class QuestionService {
       },
     });
   }
-
-  async createAnswer(
-    internId: string,
-    questionId: string,
-    answer: string,
-    tick: boolean,
-  ) {
-    const newAnswer = await this.prisma.internAnswer.create({
-      data: {
-        internId,
-        questionId,
-        answer,
-        tick,
-      },
-    });
-    console.log('Created new answer:', newAnswer);
-    return newAnswer;
-  }
-
-  async getAnswersByQuestion(questionId: string) {
-    console.log('Fetching answers for questionId:', questionId);
-
-    const answers = await this.prisma.internAnswer.findMany({
-      where: { questionId },
-      select: {
-        id: true,
-        internId: true,
-        answer: true,
-        questionId: true,
-        tick: true,
-        intern: {
-          select: { firstName: true, lastName: true },
-        },
-      },
-    });
-    console.log('Fetched answers:', answers);
-    return answers;
-  }
 }
