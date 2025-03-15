@@ -16,6 +16,7 @@ import { useAddQuestion } from '../../api/useAddQuestion';
 import { useUpdateQuestions } from '../../api/useUpdateQuestion';
 import { useQueryClient } from 'react-query';
 import { useLocation } from 'wouter';
+import toast from 'react-hot-toast';
 
 export const InterviewBuilderPage = () => {
   const { data: apiResponse, isLoading } = useQuestions();
@@ -47,7 +48,7 @@ export const InterviewBuilderPage = () => {
 
   const handleSaveChanges = async () => {
     if (modifiedQuestions.size === 0) {
-      console.log('Nema izmjena za spremiti.');
+      toast.arguments('Nema izmjena za spremiti.');
       return;
     }
 
@@ -75,21 +76,19 @@ export const InterviewBuilderPage = () => {
       }[];
 
       await updateAllQuestions(validQuestions);
-      console.log('Ažurirana pitanja su uspješno spremljena!');
+      toast.success('Ažurirana pitanja su uspješno spremljena!');
       setModifiedQuestions(new Map());
       queryClient.invalidateQueries(['questions']);
     } catch (error) {
-      console.error('Greška pri spremanju izmjena:', error);
+      toast.error('Greška pri spremanju izmjena:' + error);
     }
   };
 
   const handleAddQuestion = async (newQuestion: InterviewQuestion) => {
-    console.log('📢 Pozivam addQuestion s:', newQuestion);
-
     try {
       addQuestion(newQuestion, {
         onSuccess: (addedQuestion) => {
-          console.log('Pitanje uspješno dodano!', addedQuestion);
+          toast.success("Pitanje uspješno dodano!', addedQuestion");
           setIsEditing(false);
           setQuestions((prevQuestions) => [...prevQuestions, addedQuestion]);
 
@@ -98,11 +97,11 @@ export const InterviewBuilderPage = () => {
           }, 1000);
         },
         onError: (error) => {
-          console.error('Dodavanje pitanja nije uspjelo.', error);
+          toast.error('Dodavanje pitanja nije uspjelo:' + error);
         },
       });
     } catch (error) {
-      console.error('Greška pri dodavanju pitanja:', error);
+      toast.error('Greška pri dodavanju pitanja: ' + error);
     }
   };
 

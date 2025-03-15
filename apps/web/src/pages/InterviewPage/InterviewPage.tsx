@@ -2,7 +2,6 @@ import {
   Discipline,
   Intern,
   InterviewStatus,
-  MultistepQuestion,
   QuestionType,
 } from '@internship-app/types';
 import { Json } from '@internship-app/types/src/json';
@@ -32,11 +31,30 @@ import { InterviewQuestion } from '@prisma/client';
 const mapAnswersToQuestions = (
   answers: FieldValues,
   questions: InterviewQuestion[],
-): { [key: number]: Json } => {
-  return questions.map((q) => ({
-    ...q,
-    ...answers[q.id],
-  }));
+): {
+  [key: string]: { questionId: string; value: string | number; tick?: boolean };
+} => {
+  return questions.reduce(
+    (acc, question) => {
+      if (answers[question.id]) {
+        acc[question.id] = {
+          questionId: question.id,
+          value:
+            answers[question.id]?.value ??
+            (question.type === QuestionType.Checkbox ? false : ''),
+          tick: answers[question.id]?.tick ?? false,
+        };
+      }
+      return acc;
+    },
+    {} as {
+      [key: string]: {
+        questionId: string;
+        value: string | number;
+        tick?: boolean;
+      };
+    },
+  );
 };
 
 const DISCIPLINE_TO_CATEGORIES: Record<Discipline, QuestionCategory[]> = {
@@ -64,6 +82,10 @@ const InterviewPage = () => {
   const setImage = useSetImage();
   const queryClient = useQueryClient();
 
+  const refreshQuestions = () => {
+    queryClient.invalidateQueries('questions');
+  };
+
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const memoizedDisciplines = useMemo(
@@ -73,6 +95,17 @@ const InterviewPage = () => {
 
   const { data: interviewQuestions = [] } =
     useFetchQuestionsByDisciplines(memoizedDisciplines);
+
+  useEffect(() => {
+    refreshQuestions();
+
+    if (interviewQuestions.length > 0) {
+      localStorage.setItem(
+        'interviewQuestions',
+        JSON.stringify(interviewQuestions),
+      );
+    }
+  }, [interviewQuestions]);
 
   const localFormValue = JSON.parse(
     localStorage.getItem(`interview ${internId}`)!,
@@ -112,18 +145,23 @@ const InterviewPage = () => {
   const handleFormSubmit = (internId: string) =>
     form.handleSubmit((data) => {
       const answers = mapAnswersToQuestions(data, interviewQuestions);
+
       const score = Object.values(answers)
-        .filter(
-          (a) =>
-            (a.type === QuestionType.Slider &&
-              a.category === QuestionCategory.Final) ||
-            (a.type === QuestionType.Slider &&
-              a.category === QuestionCategory.Marketing &&
-              intern?.internDisciplines?.some(
-                (discipline) => discipline.discipline === 'Marketing',
-              )),
-        )
-        .reduce((acc, curr) => acc + +curr.value, 0);
+        .map((answer) => {
+          const question = interviewQuestions.find(
+            (q: InterviewQuestion) => q.id === answer.questionId,
+          );
+          return question &&
+            question.type === QuestionType.Slider &&
+            (question.category === QuestionCategory.Final ||
+              (question.category === QuestionCategory.Marketing &&
+                intern?.internDisciplines?.some(
+                  (d) => d.discipline === 'Marketing',
+                )))
+            ? Number(answer.value) || 0
+            : 0;
+        })
+        .reduce((acc, curr) => acc + curr, 0);
 
       setInterview.mutate({ internId, answers, score });
     })();
@@ -170,47 +208,6 @@ const InterviewPage = () => {
     );
   }
 
-  const questions: MultistepQuestion<QuestionCategory>[] = (
-    interviewQuestions ?? []
-  ).map((q: InterviewQuestion) => {
-    const baseQuestion = {
-      id: q.id,
-      title: q.title ?? 'Untitled',
-      category: q.category as QuestionCategory,
-      type: q.type as QuestionType,
-      options: 'options' in q ? q.options ?? [] : [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isDisabled: false,
-      required: false,
-    };
-
-    switch (q.type) {
-      case QuestionType.Slider:
-        return {
-          ...baseQuestion,
-          min: q.min ?? 0,
-          max: q.max ?? 10,
-          step: q.step ?? 1,
-        } as MultistepQuestion<QuestionCategory>;
-      case QuestionType.Checkbox:
-      case QuestionType.Radio:
-      case QuestionType.Select:
-        return {
-          ...baseQuestion,
-          options: q.options ?? [],
-        } as MultistepQuestion<QuestionCategory>;
-      case QuestionType.Number:
-        return {
-          ...baseQuestion,
-          min: q.min,
-          max: q.max,
-        } as MultistepQuestion<QuestionCategory>;
-      default:
-        return baseQuestion as MultistepQuestion<QuestionCategory>;
-    }
-  });
-
   return (
     <AdminPage>
       <IntervieweeInfo
@@ -219,7 +216,7 @@ const InterviewPage = () => {
         intern={intern}
       />
       <MultistepForm
-        questions={questions}
+        questions={interviewQuestions}
         form={form}
         steps={getFilteredInterviewSteps(
           intern.internDisciplines.map((ind) => ind.discipline),

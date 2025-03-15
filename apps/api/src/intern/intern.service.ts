@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import {
   BoardAction,
   CreateNoteRequest,
@@ -22,6 +22,13 @@ import { PrismaService } from 'src/prisma.service';
 
 import * as disposableEmailBlocklist from './disposable-email-blocklist.json';
 import { CreateInternDto } from './dto/createIntern.dto';
+
+type AnswerData = {
+  questionId: string;
+  internId: string;
+  value: string;
+  tick: boolean;
+};
 
 @Injectable()
 export class InternService {
@@ -256,16 +263,40 @@ export class InternService {
   }
 
   async setInterview(internId: string, data: SetInterviewRequest) {
+    console.log('BACKEND: ', data);
+
     await this.prisma.intern.update({
-      where: {
-        id: internId,
-      },
+      where: { id: internId },
       data: {
         interviewStatus: InterviewStatus.Done,
         interviewSlot: {
-          update: { answers: data.answers, score: data.score },
+          upsert: {
+            update: { answers: data.answers, score: data.score },
+            create: {
+              id: internId,
+              answers: data.answers,
+              score: data.score,
+              start: new Date(),
+              end: new Date(),
+            },
+          },
         },
       },
+    });
+
+    const answers = data.answers as Record<string, AnswerData>;
+
+    const answerEntries = Object.entries(answers).map(
+      ([questionId, answer]) => ({
+        questionId,
+        internId,
+        answer: answer.value,
+        tick: answer.tick,
+      }),
+    );
+
+    await this.prisma.internAnswer.createMany({
+      data: answerEntries,
     });
   }
 

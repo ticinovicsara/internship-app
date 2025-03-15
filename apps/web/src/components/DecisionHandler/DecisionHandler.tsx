@@ -11,7 +11,6 @@ import { FieldValues, useForm } from 'react-hook-form';
 import { useSetInternDecision } from '../../api/useSetInternDecision';
 import { disciplineLabel } from '../../constants/internConstants';
 import InputHandler from '../InputHandler';
-import { ExtendedQuestion } from '../../pages/InterviewPage/InterviewQuestionHandler/InterviewQuestionHandler';
 
 type DecisionHandlerProps = {
   intern: Intern;

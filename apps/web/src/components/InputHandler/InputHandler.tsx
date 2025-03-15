@@ -15,12 +15,6 @@ import {
   FieldValues,
   UseFormReturn,
 } from 'react-hook-form';
-import { InterviewQuestion } from '@prisma/client';
-
-type ExtendedQuestion = InterviewQuestion & {
-  required?: boolean;
-  registerValue?: any;
-};
 
 type InputHandlerProps = {
   question: Question;
