@@ -35,11 +35,10 @@ export class QuestionController {
   @Post('/category')
   @UseGuards(JwtAuthGuard)
   async getByDisciplines(@Body('disciplines') disciplines: string[]) {
-    console.log('Primljene kategorije:', disciplines);
     return this.questionsService.getByDisciplines(disciplines);
   }
 
-  @Get('/:questionId/answers')
+  @Get('/answers/:questionId')
   @UseGuards(JwtAuthGuard)
   async getAnswersByQuestion(@Param('questionId') questionId: string) {
     const answers = await this.questionsService.getAnswersByQuestion(
