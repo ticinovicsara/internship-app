@@ -1,14 +1,18 @@
 import { CircularProgress, Typography, Card, CardContent } from '@mui/material';
 import LogoHeader from '../../components/LogoHeader';
 import { useFetchAnswersForQuestion } from '../../api/useFetchAnswers';
-import { useParams } from 'react-router-dom';
+import { Path } from '../../constants/paths';
+import { useRoute } from 'wouter';
 
 export const StatsPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const questionId = id;
+  const [, params] = useRoute(Path.QuestionsStats);
+  console.log('Params:', params);
 
-  const { data: answers = [], isLoading } =
-    useFetchAnswersForQuestion(questionId);
+  const questionId = params?.questionId;
+
+  const { data: answers = [], isLoading } = questionId
+    ? useFetchAnswersForQuestion(questionId)
+    : { data: [], isLoading: false };
 
   if (isLoading) return <CircularProgress />;
 

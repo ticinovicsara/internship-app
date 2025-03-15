@@ -5,12 +5,11 @@ import { useMutation, useQueryClient } from 'react-query';
 import { api } from '.';
 
 const setInterview = async (req: SetInterviewRequest) => {
-  console.log('API SETINTERVIEW: ', req);
-
-  return await api.put<SetInterviewRequest, never>(
+  const response = await api.put(
     `http://localhost:3000/api/intern/setInterview/${req.internId}`,
     req,
   );
+  return response;
 };
 
 export const useSetInterview = (navigate: () => void) => {

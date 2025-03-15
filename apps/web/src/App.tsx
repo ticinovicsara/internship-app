@@ -48,7 +48,7 @@ export const App = () => {
               path={Path.InterviewBuilder}
               component={InterviewBuilderPage}
             ></Route>
-            <Route path="/stats/:questionId" component={StatsPage} />
+            <Route path={Path.QuestionsStats} component={StatsPage} />
             <Route path={Path.InterviewPicker} component={AdminInterviewPage} />
             <Route
               path={Path.ScheduleInterview}

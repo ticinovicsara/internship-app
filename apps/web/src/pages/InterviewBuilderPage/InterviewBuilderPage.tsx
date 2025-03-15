@@ -238,7 +238,7 @@ export const InterviewBuilderPage = () => {
                     </Button>
                     <Button
                       variant="outlined"
-                      onClick={() => setLocation(`/stats/${q.id}`)}
+                      onClick={() => setLocation(`/admin/stats/${q.id}`)}
                     >
                       STATS
                     </Button>

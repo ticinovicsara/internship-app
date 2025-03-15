@@ -34,7 +34,7 @@ async function main() {
         email: 'ana.kovac@example.com',
         firstName: 'Ana',
         lastName: 'Kovač',
-        interviewStatus: InterviewStatus.Pending,
+        interviewStatus: InterviewStatus.Done,
         data: {
           dateOfBirth: new Date('2003-03-01T00:00:00.000Z'),
         },

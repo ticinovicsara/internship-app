@@ -9,6 +9,7 @@ import * as postmark from 'postmark';
 import { PrismaService } from 'src/prisma.service';
 
 import { CreateInterviewSlotDto } from './dto/createInterviewSlot.dto';
+import { AnswersWithIntern } from '@internship-app/types';
 
 @Injectable()
 export class InterviewSlotService {
@@ -305,7 +306,9 @@ dump.hr`,
     });
   }
 
-  async getAnswersForQuestion(questionId: string) {
+  async getAnswersForQuestion(
+    questionId: string,
+  ): Promise<AnswersWithIntern[]> {
     const interviewSlots = await this.prisma.interviewSlot.findMany({
       where: {
         answers: {
@@ -319,7 +322,9 @@ dump.hr`,
       },
     });
 
-    const answersWithIntern = await Promise.all(
+    console.log('Interview Slots:', interviewSlots);
+
+    const answersWithIntern: AnswersWithIntern[] = await Promise.all(
       interviewSlots.map(async (slot) => {
         const intern = await this.prisma.intern.findUnique({
           where: { id: slot.internId },
@@ -334,14 +339,14 @@ dump.hr`,
           }[]
         ).filter((answer) => answer.questionId === questionId);
 
+        const firstAnswer = answers.length > 0 ? answers[0] : null;
+
         return {
           internId: slot.internId,
-          internFirstName: intern?.firstName,
-          internLastName: intern?.lastName,
-          answers: answers.map((answer) => ({
-            answer: answer.answer,
-            tick: answer.tick,
-          })),
+          internFirstName: intern?.firstName || '',
+          internLastName: intern?.lastName || '',
+          answer: firstAnswer ? firstAnswer.answer : '',
+          tick: firstAnswer ? firstAnswer.tick : false,
         };
       }),
     );
