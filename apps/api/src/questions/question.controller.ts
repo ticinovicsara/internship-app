@@ -1,4 +1,12 @@
-import { Body, Controller, Put, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Put,
+  Get,
+  Post,
+  UseGuards,
+  Param,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AdminLogAction } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
@@ -27,9 +35,6 @@ export class QuestionController {
   @UseGuards(JwtAuthGuard)
   async getById(@Param('id') id: string) {
     const question = await this.questionsService.getById(id);
-    if (!question) {
-      throw new NotFoundException(`Question with ID ${id} not found`);
-    }
     return question;
   }
 

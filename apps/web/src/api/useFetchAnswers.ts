@@ -8,8 +8,7 @@ const fetchAnswersForQuestion = async (
   const response = await api.get(
     `http://localhost:3000/api/interview-slot/answers/${questionId}`,
   );
-
-  return response.data;
+  return response;
 };
 
 export const useFetchAnswersForQuestion = (questionId: string) => {
