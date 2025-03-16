@@ -105,7 +105,7 @@ const InterviewPage = () => {
         JSON.stringify(interviewQuestions),
       );
     }
-  }, [interviewQuestions]);
+  });
 
   const localFormValue = JSON.parse(
     localStorage.getItem(`interview ${internId}`)!,

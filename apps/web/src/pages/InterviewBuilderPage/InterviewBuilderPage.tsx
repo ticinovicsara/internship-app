@@ -61,20 +61,7 @@ export const InterviewBuilderPage = () => {
     );
 
     try {
-      const validQuestions = updatedQuestions as {
-        id: string;
-        title: string;
-        type: string;
-        category: string;
-        options: string[];
-        min: number;
-        max: number;
-        step: number;
-        createdAt: Date;
-        updatedAt: Date;
-        isDisabled: boolean;
-      }[];
-
+      const validQuestions = updatedQuestions as InterviewQuestion[];
       await updateAllQuestions(validQuestions);
       toast.success('Ažurirana pitanja su uspješno spremljena!');
       setModifiedQuestions(new Map());
