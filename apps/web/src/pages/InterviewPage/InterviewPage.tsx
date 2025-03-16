@@ -82,10 +82,6 @@ const InterviewPage = () => {
   const setImage = useSetImage();
   const queryClient = useQueryClient();
 
-  const refreshQuestions = () => {
-    queryClient.invalidateQueries('questions');
-  };
-
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const memoizedDisciplines = useMemo(
@@ -93,19 +89,18 @@ const InterviewPage = () => {
     [disciplineCategories],
   );
 
-  const { data: interviewQuestions = [] } =
+  const { data: interviewQuestions = [], refetch } =
     useFetchQuestionsByDisciplines(memoizedDisciplines);
 
   useEffect(() => {
-    refreshQuestions();
-
+    localStorage.removeItem('interviewQuestions');
     if (interviewQuestions.length > 0) {
       localStorage.setItem(
         'interviewQuestions',
         JSON.stringify(interviewQuestions),
       );
     }
-  });
+  }, [interviewQuestions]);
 
   const localFormValue = JSON.parse(
     localStorage.getItem(`interview ${internId}`)!,
@@ -114,15 +109,13 @@ const InterviewPage = () => {
     defaultValues: { ...localFormValue },
   });
 
-  useEffect(() => {
-    const formSaver = setInterval(() => {
-      localStorage.setItem(
-        `interview ${internId}`,
-        JSON.stringify(form.getValues()),
-      );
-    }, 5000);
+  const memoizedQuestions = useMemo(
+    () => interviewQuestions,
+    [interviewQuestions],
+  );
 
-    return () => clearInterval(formSaver);
+  useEffect(() => {
+    localStorage.setItem(`interview ${internId}`, JSON.stringify(form.watch()));
   });
 
   useEffect(() => {
@@ -216,7 +209,7 @@ const InterviewPage = () => {
         intern={intern}
       />
       <MultistepForm
-        questions={interviewQuestions}
+        questions={memoizedQuestions}
         form={form}
         steps={getFilteredInterviewSteps(
           intern.internDisciplines.map((ind) => ind.discipline),

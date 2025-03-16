@@ -5,7 +5,7 @@ import { InterviewQuestion } from '@prisma/client';
 const addQuestion = async (newQuestion: Omit<InterviewQuestion, 'id'>) => {
   const response = await api.post('/questions', newQuestion);
 
-  return response.data;
+  return response;
 };
 
 export const useAddQuestion = () => {

@@ -30,9 +30,7 @@ export const StatsPage = () => {
     }));
   };
 
-  const handleEnterIntern = (internId: string) => {
-    window.location.href = `/admin/intern/${internId}`;
-  };
+  console.log('Usli, ', answers);
 
   if (answerLoading || questionLoading) return <LoaderIcon />;
 
@@ -56,13 +54,13 @@ export const StatsPage = () => {
               marginTop: '15px',
             }}
           >
-            <Typography variant="p" style={{ marginBottom: '20px' }}>
+            <Typography variant="body1" style={{ marginBottom: '20px' }}>
               Ime i prezime
             </Typography>
-            <Typography variant="p" style={{ marginBottom: '20px' }}>
+            <Typography variant="body1" style={{ marginBottom: '20px' }}>
               Odgovor
             </Typography>
-            <Typography variant="p" style={{ marginBottom: '20px' }}>
+            <Typography variant="body1" style={{ marginBottom: '20px' }}>
               Akcije
             </Typography>
           </div>

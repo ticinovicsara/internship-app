@@ -1,5 +1,5 @@
 import { QuestionType } from '@internship-app/types';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Typography, TextField, Button, MenuItem } from '@mui/material';
 import { InterviewQuestion } from '@prisma/client';
 import { QuestionCategory } from '../../constants/interviewConstants';
@@ -10,6 +10,14 @@ type Props = {
 };
 
 const QuestionDetails = memo(({ question, onUpdate }: Props) => {
+  const initialTitle = useMemo(() => question.title, [question.title]);
+  const initialCategory = useMemo(() => question.category, [question.category]);
+  const initialType = useMemo(() => question.type, [question.type]);
+  const initialOptions = useMemo(
+    () => question.options || [],
+    [question.options],
+  );
+
   const [editedTitle, setEditedTitle] = useState(question.title);
   const [editedCategory, setEditedCategory] = useState(question.category);
   const [editedType, setEditedType] = useState(question.type);
@@ -17,21 +25,35 @@ const QuestionDetails = memo(({ question, onUpdate }: Props) => {
     question.options ? question.options : [],
   );
 
+  const handleUpdate = useCallback(() => {
+    onUpdate({
+      title: editedTitle,
+      category: editedCategory,
+      type: editedType,
+      options,
+    });
+  }, [editedTitle, editedCategory, editedType, options, onUpdate]);
+
   useEffect(() => {
     if (
-      editedTitle !== question.title ||
-      editedCategory !== question.category ||
-      editedType !== question.type ||
-      options !== question.options
+      editedTitle !== initialTitle ||
+      editedCategory !== initialCategory ||
+      editedType !== initialType ||
+      options !== initialOptions
     ) {
-      onUpdate({
-        title: editedTitle,
-        category: editedCategory,
-        type: editedType,
-        options,
-      });
+      handleUpdate();
     }
-  }, [editedTitle, editedCategory, editedType, options, onUpdate, question]);
+  }, [
+    editedTitle,
+    editedCategory,
+    editedType,
+    options,
+    handleUpdate,
+    initialTitle,
+    initialCategory,
+    initialType,
+    initialOptions,
+  ]);
 
   const handleCategoryChange = (
     event: React.ChangeEvent<{ value: unknown }>,

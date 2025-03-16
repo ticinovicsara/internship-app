@@ -34,10 +34,13 @@ export const InterviewBuilderPage = () => {
   const { mutateAsync: updateAllQuestions } = useUpdateQuestions();
 
   useEffect(() => {
-    if (Array.isArray(apiResponse)) {
+    if (
+      Array.isArray(apiResponse) &&
+      JSON.stringify(apiResponse) !== JSON.stringify(questions)
+    ) {
       setQuestions(apiResponse);
     }
-  }, [apiResponse]);
+  }, [apiResponse, questions]);
 
   const handleChange = useCallback(
     (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
@@ -48,7 +51,7 @@ export const InterviewBuilderPage = () => {
 
   const handleSaveChanges = async () => {
     if (modifiedQuestions.size === 0) {
-      toast.arguments('Nema izmjena za spremiti.');
+      toast.error('Nema izmjena za spremiti.');
       return;
     }
 
@@ -66,22 +69,29 @@ export const InterviewBuilderPage = () => {
       toast.success('Ažurirana pitanja su uspješno spremljena!');
       setModifiedQuestions(new Map());
       queryClient.invalidateQueries(['questions']);
+      localStorage.setItem(
+        'interviewQuestions',
+        JSON.stringify(validQuestions),
+      );
     } catch (error) {
       toast.error('Greška pri spremanju izmjena:' + error);
     }
   };
 
   const handleAddQuestion = async (newQuestion: InterviewQuestion) => {
+    if (!newQuestion.title || !newQuestion.category || !newQuestion.type) {
+      toast.error('Sva polja su obavezna!');
+      return;
+    }
+
     try {
       addQuestion(newQuestion, {
         onSuccess: (addedQuestion) => {
-          toast.success("Pitanje uspješno dodano!', addedQuestion");
+          toast.success('Pitanje uspješno dodano!');
           setIsEditing(false);
           setQuestions((prevQuestions) => [...prevQuestions, addedQuestion]);
 
-          setTimeout(() => {
-            queryClient.invalidateQueries(['questions']);
-          }, 1000);
+          queryClient.invalidateQueries(['questions']);
         },
         onError: (error) => {
           toast.error('Dodavanje pitanja nije uspjelo:' + error);
@@ -117,23 +127,22 @@ export const InterviewBuilderPage = () => {
   };
 
   const handleDisableQuestion = (id: string) => {
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((q) =>
+    setQuestions((prevQuestions) => {
+      const updatedQuestions = prevQuestions.map((q) =>
         q.id === id ? { ...q, isDisabled: !q.isDisabled } : q,
-      ),
-    );
+      );
+      return updatedQuestions;
+    });
 
     setModifiedQuestions((prevModifiedQuestions) => {
       const existingQuestion = questions.find((q) => q.id === id);
       if (!existingQuestion) return prevModifiedQuestions;
 
-      const wasDisabled = existingQuestion.isDisabled;
-      const newDisabledState = !wasDisabled;
-
-      if (wasDisabled === newDisabledState) return prevModifiedQuestions;
-
       const updated = new Map(prevModifiedQuestions);
+      const newDisabledState = !existingQuestion.isDisabled;
+
       updated.set(id, { isDisabled: newDisabledState });
+
       return updated;
     });
   };
