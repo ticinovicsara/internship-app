@@ -23,6 +23,16 @@ export class QuestionController {
     return questions;
   }
 
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async getById(@Param('id') id: string) {
+    const question = await this.questionsService.getById(id);
+    if (!question) {
+      throw new NotFoundException(`Question with ID ${id} not found`);
+    }
+    return question;
+  }
+
   @Post('/category')
   @UseGuards(JwtAuthGuard)
   async getByDisciplines(@Body('disciplines') disciplines: string[]) {

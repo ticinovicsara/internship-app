@@ -151,7 +151,7 @@ export const InterviewBuilderPage = () => {
     });
   };
 
-  if (isLoading || !apiResponse) {
+  if (isLoading) {
     return <p>Loading...</p>;
   }
 

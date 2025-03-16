@@ -310,47 +310,66 @@ dump.hr`,
     questionId: string,
   ): Promise<AnswersWithIntern[]> {
     const interviewSlots = await this.prisma.interviewSlot.findMany({
-      where: {
-        answers: {
-          path: ['questionId'],
-          equals: questionId,
-        },
-      },
       select: {
         internId: true,
         answers: true,
       },
     });
 
-    console.log('Interview Slots:', interviewSlots);
+    const internIds = interviewSlots
+      .map((slot) => slot.internId)
+      .filter((internId) => internId !== null && internId !== undefined);
 
-    const answersWithIntern: AnswersWithIntern[] = await Promise.all(
-      interviewSlots.map(async (slot) => {
-        const intern = await this.prisma.intern.findUnique({
-          where: { id: slot.internId },
-          select: { firstName: true, lastName: true },
-        });
+    const interns = internIds.length
+      ? await this.prisma.intern.findMany({
+          where: { id: { in: internIds } },
+          select: { id: true, firstName: true, lastName: true },
+        })
+      : [];
 
-        const answers = (
-          JSON.parse(slot.answers as string) as {
-            questionId: string;
-            answer: string;
-            tick: boolean;
-          }[]
-        ).filter((answer) => answer.questionId === questionId);
-
-        const firstAnswer = answers.length > 0 ? answers[0] : null;
-
-        return {
-          internId: slot.internId,
-          internFirstName: intern?.firstName || '',
-          internLastName: intern?.lastName || '',
-          answer: firstAnswer ? firstAnswer.answer : '',
-          tick: firstAnswer ? firstAnswer.tick : false,
-        };
-      }),
+    const internMap = Object.fromEntries(
+      interns.map((intern) => [intern.id, intern]),
     );
 
+    const answersWithIntern: AnswersWithIntern[] = await Promise.all(
+      interviewSlots
+        .flatMap((slot) => {
+          let parsedAnswers: Record<string, any> = {};
+
+          if (typeof slot.answers === 'string') {
+            try {
+              parsedAnswers = JSON.parse(slot.answers);
+            } catch (error) {
+              console.error('Error parsing JSON:', error);
+              return [];
+            }
+          } else if (
+            typeof slot.answers === 'object' &&
+            slot.answers !== null
+          ) {
+            parsedAnswers = slot.answers as Record<string, any>;
+          } else {
+            console.warn('Unexpected answers format:', slot.answers);
+            return [];
+          }
+
+          const allAnswers = Object.values(parsedAnswers).flat();
+
+          const relevantAnswers = allAnswers.filter(
+            (answer: { questionId: string }) =>
+              answer.questionId === questionId,
+          );
+
+          return relevantAnswers.map((answer) => ({
+            internId: slot.internId,
+            internFirstName: internMap[slot.internId]?.firstName || 'Unknown',
+            internLastName: internMap[slot.internId]?.lastName || 'Unknown',
+            answer: answer.value,
+            tick: answer.tick,
+          }));
+        })
+        .filter(Boolean),
+    );
     return answersWithIntern;
   }
 }

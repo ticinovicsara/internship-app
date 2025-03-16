@@ -12,6 +12,12 @@ export class QuestionService {
     return await this.prisma.interviewQuestion.findMany();
   }
 
+  async getById(id: string) {
+    return this.prisma.interviewQuestion.findUnique({
+      where: { id },
+    });
+  }
+
   async getByDisciplines(disciplines: string[]): Promise<InterviewQuestion[]> {
     if (!disciplines || disciplines.length === 0) {
       return [];
